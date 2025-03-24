@@ -3,10 +3,9 @@ import React from "react";
 const Navbar = () => {
   return (
     <>
-      <div className="navbar bg-base-100 shadow-sm flex justify-between">
-        <div className="">
-          <a className="btn btn-ghost text-xl">[appName]</a>
-        </div>
+      <div className="navbar bg-base-100 shadow-sm flex justify-between border-b">
+        <a className="btn btn-ghost text-xl">[appName]</a>
+
         <div className="buttons flex justify-between w-80">
           <button className="btn btn-ghost btn-rectangle bg-green-600 w-38 hover:bg-green-700">
             <svg
@@ -40,7 +39,7 @@ const Navbar = () => {
           </button>
         </div>
 
-        <div className="dropdown dropdown-end">
+        <div className="dropdown dropdown-end w-40 flex justify-end">
           <div
             tabIndex={0}
             role="button"
