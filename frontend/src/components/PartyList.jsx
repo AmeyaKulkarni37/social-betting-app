@@ -7,11 +7,15 @@ const PartyList = () => {
         <h1 className="text-3xl font-bold mb-10">My Parties</h1>
         <div className="partylist grid grid-cols-3 gap-y-10 justify-center items-center">
           <div className="party w-60 h-100 border rounded-lg flex flex-col justify-evenly items-center">
-            <div className="party-header">
-              <h2 className="text-center font-bold pt-5 text-xl">Party Name</h2>
-              <p className="text-center text-m">Host: Host Name</p>
+            <div className="party-header w-50">
+              <h2 className="text-center font-bold pb-5 text-3xl text-wrap truncate max-h-25">
+                Party Name
+              </h2>
+              <p className="text-center text-lg text-wrap truncate max-h-25">
+                Host: Host Name
+              </p>
             </div>
-            <div className="w-30 rounded-full">
+            <div className="w-40 rounded-full">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"

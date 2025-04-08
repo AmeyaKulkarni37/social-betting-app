@@ -7,7 +7,12 @@ const Navbar = () => {
         <a className="btn btn-ghost text-xl">[appName]</a>
 
         <div className="buttons flex justify-between w-80">
-          <button className="btn btn-ghost btn-rectangle bg-green-600 w-38 hover:bg-green-700">
+          <button
+            className="btn btn-ghost btn-rectangle bg-green-600 w-38 hover:bg-green-700"
+            onClick={() =>
+              document.getElementById("create_party_modal").showModal()
+            }
+          >
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -34,7 +39,12 @@ const Navbar = () => {
             </svg>
             Create Party
           </button>
-          <button className="btn btn-ghost btn-rectangle w-38 border border-white hover:bg-blue-700">
+          <button
+            className="btn btn-ghost btn-rectangle w-38 border border-white hover:bg-blue-700"
+            onClick={() =>
+              document.getElementById("join_party_modal").showModal()
+            }
+          >
             Join Party
           </button>
         </div>
