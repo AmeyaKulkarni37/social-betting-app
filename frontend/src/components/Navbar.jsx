@@ -35,9 +35,7 @@ const Navbar = () => {
             </Link>
             <button
               className="btn btn-ghost btn-rectangle bg-green-600 w-38 hover:bg-green-700"
-              // onClick={() =>
-              //   document.getElementById("create_party_modal").showModal()
-              // }
+              onClick={() => document.getElementById("prop_modal").showModal()}
             >
               <svg
                 viewBox="0 0 24 24"
