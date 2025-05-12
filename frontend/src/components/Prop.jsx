@@ -1,12 +1,29 @@
 import React from "react";
+import { useRef, useState } from "react";
+import PlaceBetModal from "./PlaceBetModal";
 
-const Prop = () => {
+const Prop = ({ title, description, option1, odds1, option2, odds2 }) => {
+  const modalRef = useRef();
+  const [currentBet, setCurrentBet] = useState(null);
+
+  const openModal = ({ betName, choice, odds }) => {
+    setCurrentBet({ betName, choice, odds });
+    modalRef.current.showModal();
+    // need a handlePlace for database entry
+  };
+
+  const handlePlaceBet = ({ betName, choice, odds, amount }) => {
+    console.log(
+      `Placed $${amount} on ${choice} for "${betName}" at odds ${odds}`
+    );
+  };
+
   return (
     <>
-      <div class="card card-border bg-base-100 w-100%">
-        <div class="card-body pt-3 pb-5 px-5">
+      <div className="card card-border bg-base-100 w-100%">
+        <div className="card-body pt-3 pb-5 px-5">
           <div className="flex justify-between items-top">
-            <h2 class="card-title">Ameya O/U 5.5 Rebounds</h2>
+            <h2 className="card-title">{title}</h2>
             <div className="dropdown dropdown-start">
               <div
                 tabIndex={0}
@@ -32,7 +49,7 @@ const Prop = () => {
               </div>
               <ul
                 tabIndex={0}
-                className="dropdown-content menu bg-base-300 rounded-box z-1 w-20 p-2 shadow-sm"
+                className="dropdown-content menu bg-base-300 rounded-box z-1 w-25 p-2 shadow-sm"
               >
                 <li>
                   <a>Edit</a>
@@ -44,18 +61,37 @@ const Prop = () => {
             </div>
           </div>
 
-          <p className="py-2">Will Ameya get 5.5 rebounds in Brodie today</p>
-          <div class="card-actions justify-center">
-            <button class="btn btn-primary flex flex-col items-center w-1/3 p-7 border-none hover:bg-indigo-700">
-              <h3>Over</h3>
-              <p>+120</p>
+          <p className="py-2">{description}</p>
+          <div className="card-actions justify-center">
+            <button
+              className="btn btn-primary flex flex-col items-center w-1/3 p-7 border-none hover:bg-indigo-700"
+              onClick={() =>
+                openModal({ betName: title, choice: option1, odds: odds1 })
+              }
+            >
+              <h3>{option1}</h3>
+              <p>{odds1}</p>
             </button>
-            <button class="btn btn-primary flex flex-col items-center w-1/3 p-7 border-none hover:bg-indigo-700">
-              <h3>Under</h3>
-              <p>-150</p>
+            <button
+              className="btn btn-primary flex flex-col items-center w-1/3 p-7 border-none hover:bg-indigo-700"
+              onClick={() =>
+                openModal({ betName: title, choice: option2, odds: odds2 })
+              }
+            >
+              <h3>{option2}</h3>
+              <p>{odds2}</p>
             </button>
           </div>
         </div>
+        {currentBet && (
+          <PlaceBetModal
+            ref={modalRef}
+            betName={currentBet.betName}
+            choice={currentBet.choice}
+            odds={currentBet.odds}
+            onSubmit={handlePlaceBet}
+          />
+        )}
       </div>
     </>
   );
