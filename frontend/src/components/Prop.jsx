@@ -1,14 +1,21 @@
 import React from "react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import PlaceBetModal from "./PlaceBetModal";
 
 const Prop = ({ title, description, option1, odds1, option2, odds2 }) => {
   const modalRef = useRef();
   const [currentBet, setCurrentBet] = useState(null);
 
+  // show modal when currentBet changes
+  useEffect(() => {
+    if (currentBet && modalRef.current) {
+      modalRef.current.showModal();
+    }
+  }, [currentBet]);
+
   const openModal = ({ betName, choice, odds }) => {
     setCurrentBet({ betName, choice, odds });
-    modalRef.current.showModal();
+
     // need a handlePlace for database entry
   };
 

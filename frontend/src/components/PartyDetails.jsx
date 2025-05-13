@@ -1,8 +1,45 @@
 import React from "react";
 import Prop from "./Prop";
+import { useState } from "react";
 
 const PartyDetails = () => {
-  const [activeTab, setActiveTab] = React.useState("active");
+  const [activeTab, setActiveTab] = useState("active");
+
+  const propBets = [
+    {
+      title: "Prop A",
+      description: "test description",
+      option1: "Over",
+      odds1: "+110",
+      option2: "Under",
+      odds2: "-150",
+    },
+    {
+      title: "Prop B",
+      description: "test description",
+      option1: "Over",
+      odds1: "-1500",
+      option2: "Under",
+      odds2: "+700",
+    },
+  ];
+
+  const yourBets = [
+    {
+      prop: "Prop A",
+      line: "Over",
+      amount: 100,
+      odds: "+110",
+      result: "active",
+    },
+    {
+      prop: "Prop B",
+      line: "Under",
+      amount: 200,
+      odds: "-1500",
+      result: "Win",
+    },
+  ];
 
   return (
     <>
@@ -13,16 +50,9 @@ const PartyDetails = () => {
           <div className="bg-base-300 lg:col-span-2 space-y-4 p-5 rounded-xl shadow">
             <h2 className="text-xl font-semibold">Props</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Example of a Prop component */}
-              <Prop
-                title="Test title"
-                description="test description"
-                option1="Over"
-                odds1="+110"
-                option2="Under"
-                odds2="-150"
-              />
-              <Prop />
+              {propBets.map((prop, index) => (
+                <Prop key={index} {...prop} />
+              ))}
             </div>
           </div>
 
@@ -73,31 +103,40 @@ const PartyDetails = () => {
           </div>
           <div className="overflow-x-auto">
             <table className="table">
-              {/* head */}
               <thead>
                 <tr>
                   <th>Prop</th>
                   <th>Line</th>
                   <th>Amount</th>
-                  <th>Potential Winnings</th>
+                  {activeTab === "active" ? <th>Odds</th> : <th>Result</th>}
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>Cy Ganderton</td>
-                  <td>Quality Control Specialist</td>
-                  <td>Blue</td>
-                </tr>
-                <tr className="hover:bg-base-300">
-                  <td>Hart Hagerty</td>
-                  <td>Desktop Support Technician</td>
-                  <td>Purple</td>
-                </tr>
-                <tr>
-                  <td>Brice Swyre</td>
-                  <td>Tax Accountant</td>
-                  <td>Red</td>
-                </tr>
+                {activeTab === "active"
+                  ? yourBets.map((prop, index) => {
+                      if (prop.result === "active") {
+                        return (
+                          <tr key={index}>
+                            <td>{prop.prop}</td>
+                            <td>{prop.line}</td>
+                            <td>${prop.amount}</td>
+                            <td>{prop.odds}</td>
+                          </tr>
+                        );
+                      }
+                    })
+                  : yourBets.map((prop, index) => {
+                      if (prop.result !== "active") {
+                        return (
+                          <tr key={index}>
+                            <td>{prop.prop}</td>
+                            <td>{prop.line}</td>
+                            <td>${prop.amount}</td>
+                            <td>{prop.result}</td>
+                          </tr>
+                        );
+                      }
+                    })}
               </tbody>
             </table>
           </div>
