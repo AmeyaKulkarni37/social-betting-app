@@ -1,8 +1,10 @@
 import React from "react";
+import Navbar from "./Navbar";
 
 const PartyList = () => {
   return (
     <>
+      <Navbar onCreateProp={() => {}} />
       <div className="container mx-auto px-4 pt-10 w-4/5">
         <h1 className="text-3xl font-bold mb-10">My Parties</h1>
         <div className="partylist grid grid-cols-3 gap-y-10 justify-center items-center">

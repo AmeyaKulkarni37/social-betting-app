@@ -2,7 +2,15 @@ import React from "react";
 import { useRef, useState, useEffect } from "react";
 import PlaceBetModal from "./PlaceBetModal";
 
-const Prop = ({ title, description, option1, odds1, option2, odds2 }) => {
+const Prop = ({
+  title,
+  description,
+  option1,
+  odds1,
+  option2,
+  odds2,
+  onEdit,
+}) => {
   const modalRef = useRef();
   const [currentBet, setCurrentBet] = useState(null);
 
@@ -15,14 +23,25 @@ const Prop = ({ title, description, option1, odds1, option2, odds2 }) => {
 
   const openModal = ({ betName, choice, odds }) => {
     setCurrentBet({ betName, choice, odds });
-
-    // need a handlePlace for database entry
   };
 
   const handlePlaceBet = ({ betName, choice, odds, amount }) => {
     console.log(
       `Placed $${amount} on ${choice} for "${betName}" at odds ${odds}`
     );
+  };
+
+  const handleEditClick = () => {
+    if (onEdit) {
+      onEdit({
+        title,
+        description,
+        option1,
+        odds1,
+        option2,
+        odds2,
+      });
+    }
   };
 
   return (
@@ -59,10 +78,13 @@ const Prop = ({ title, description, option1, odds1, option2, odds2 }) => {
                 className="dropdown-content menu bg-base-300 rounded-box z-1 w-25 p-2 shadow-sm"
               >
                 <li>
-                  <a>Edit</a>
+                  <button className="text-green-300">Resolve</button>
                 </li>
                 <li>
-                  <a className="text-red-400">Delete</a>
+                  <button onClick={handleEditClick}>Edit</button>
+                </li>
+                <li>
+                  <button className="text-red-400">Delete</button>
                 </li>
               </ul>
             </div>

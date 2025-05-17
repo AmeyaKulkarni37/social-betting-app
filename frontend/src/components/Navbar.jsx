@@ -1,7 +1,7 @@
 import React from "react";
 import { useLocation, Link } from "react-router-dom";
 
-const Navbar = () => {
+const Navbar = ({ onCreateProp }) => {
   const location = useLocation();
 
   // PartyDetails navbar
@@ -20,9 +20,9 @@ const Navbar = () => {
                 version="1.1"
                 id="Layer_1"
                 xmlns="http://www.w3.org/2000/svg"
-                xmlns:xlink="http://www.w3.org/1999/xlink"
+                xmlnsXlink="http://www.w3.org/1999/xlink"
                 viewBox="0 0 330 330"
-                xml:space="preserve"
+                xmlSpace="preserve"
               >
                 <path
                   id="XMLID_92_"
@@ -35,7 +35,7 @@ const Navbar = () => {
             </Link>
             <button
               className="btn btn-ghost btn-rectangle bg-green-600 w-38 hover:bg-green-700"
-              onClick={() => document.getElementById("prop_modal").showModal()}
+              onClick={onCreateProp}
             >
               <svg
                 viewBox="0 0 24 24"
@@ -44,20 +44,20 @@ const Navbar = () => {
                 width={25}
                 height={25}
               >
-                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                 <g
                   id="SVGRepo_tracerCarrier"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 ></g>
                 <g id="SVGRepo_iconCarrier">
                   {" "}
                   <path
                     d="M4 12H20M12 4V20"
                     stroke="#ffffff"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   ></path>{" "}
                 </g>
               </svg>
@@ -81,11 +81,11 @@ const Navbar = () => {
                   xmlns="http://www.w3.org/2000/svg"
                   stroke="#ffffff"
                 >
-                  <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                  <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                   <g
                     id="SVGRepo_tracerCarrier"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   ></g>
                   <g id="SVGRepo_iconCarrier">
                     {" "}
@@ -129,7 +129,7 @@ const Navbar = () => {
     );
   }
 
-  // PartList navbar
+  // PartyList navbar
   return (
     <>
       <div className="navbar bg-base-100 shadow-sm flex justify-between border-b">
@@ -149,20 +149,20 @@ const Navbar = () => {
               width={25}
               height={25}
             >
-              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+              <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
               <g
                 id="SVGRepo_tracerCarrier"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               ></g>
               <g id="SVGRepo_iconCarrier">
                 {" "}
                 <path
                   d="M4 12H20M12 4V20"
                   stroke="#ffffff"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 ></path>{" "}
               </g>
             </svg>
@@ -191,11 +191,11 @@ const Navbar = () => {
                 xmlns="http://www.w3.org/2000/svg"
                 stroke="#ffffff"
               >
-                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                 <g
                   id="SVGRepo_tracerCarrier"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 ></g>
                 <g id="SVGRepo_iconCarrier">
                   {" "}
