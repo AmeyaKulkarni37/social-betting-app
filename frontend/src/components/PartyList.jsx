@@ -21,11 +21,12 @@ const PartyList = () => {
         return;
       }
 
-      // UPDATE THIS QUERY
       const { data, error } = await supabase
-        .from("parties")
-        .select("*")
-        .or(`host_id.eq.${user.id},members.cs.{${user.id}}`); // UPDATE THIS
+        .from("party_members")
+        .select("party_id, parties(*)")
+        .eq("user_id", user.id);
+
+      console.log("Fetched parties:", data);
 
       if (error) {
         console.error("Error fetching parties:", error.message);
@@ -40,7 +41,7 @@ const PartyList = () => {
   }, []);
 
   const handlePartyClick = (partyId) => {
-    navigate(`/parties/:${partyId}`);
+    navigate(`/parties/${partyId}`);
   };
 
   return (
@@ -57,18 +58,18 @@ const PartyList = () => {
           </p>
         ) : (
           <div className="partylist grid grid-cols-3 gap-y-10 justify-center items-center">
-            {parties.map((party) => (
+            {parties.map((partyMember) => (
               <div
-                key={party.id}
+                key={partyMember.party_id}
                 className="party w-60 h-100 border rounded-lg flex flex-col justify-evenly items-center hover:cursor-pointer hover:shadow-xl transition"
-                onClick={() => handlePartyClick(party.id)}
+                onClick={() => handlePartyClick(partyMember.party_id)}
               >
                 <div className="party-header w-50">
                   <h2 className="text-center font-bold pb-5 text-3xl truncate">
-                    {party.name}
+                    {partyMember.parties.name}
                   </h2>
                   <p className="text-center text-lg text-wrap truncate">
-                    Host: {party.host_name || "Unknown"}
+                    Host: {partyMember.parties.host_name || "Unknown"}
                   </p>
                 </div>
                 <div className="w-40 rounded-full">
@@ -78,11 +79,11 @@ const PartyList = () => {
                     xmlns="http://www.w3.org/2000/svg"
                     stroke="#ffffff"
                   >
-                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                    <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                     <g
                       id="SVGRepo_tracerCarrier"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     ></g>
                     <g id="SVGRepo_iconCarrier">
                       {" "}

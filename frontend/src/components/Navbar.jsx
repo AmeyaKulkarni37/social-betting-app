@@ -1,8 +1,25 @@
 import React from "react";
 import { useLocation, Link } from "react-router-dom";
+import CreatePartyModal from "./CreatePartyModal";
+import JoinPartyModal from "./JoinPartyModal";
+import { useEffect, useState } from "react";
+import supabase from "../supabase-client";
 
 const Navbar = ({ onCreateProp }) => {
   const location = useLocation();
+
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+    };
+
+    fetchUser();
+  }, []);
 
   // PartyDetails navbar
   if (location.pathname.startsWith("/parties/:")) {
@@ -235,6 +252,8 @@ const Navbar = ({ onCreateProp }) => {
           </ul>
         </div>
       </div>
+      <CreatePartyModal user={user} />
+      <JoinPartyModal />
     </>
   );
 };

@@ -6,16 +6,12 @@ import {
   Navigate,
 } from "react-router-dom";
 import PartyList from "./components/PartyList";
-import CreatePartyModal from "./components/CreatePartyModal";
-import JoinPartyModal from "./components/JoinPartyModal";
 import PartyDetails from "./components/PartyDetails";
 import Login from "./components/Login";
 
 const App = () => {
   return (
     <Router>
-      <CreatePartyModal />
-      <JoinPartyModal />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<Navigate to="/parties" />} />
