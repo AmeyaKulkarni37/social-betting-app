@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import { useNavigate } from "react-router-dom";
-import supabase from "../supabase-client"; // your Supabase client
+import supabase from "../supabase-client";
 
 const PartyList = () => {
   const [parties, setParties] = useState([]);
@@ -21,11 +21,11 @@ const PartyList = () => {
         return;
       }
 
-      // Adjust the query below based on your schema
+      // UPDATE THIS QUERY
       const { data, error } = await supabase
         .from("parties")
         .select("*")
-        .or(`host_id.eq.${user.id},members.cs.{${user.id}}`); // Example condition
+        .or(`host_id.eq.${user.id},members.cs.{${user.id}}`); // UPDATE THIS
 
       if (error) {
         console.error("Error fetching parties:", error.message);
@@ -40,7 +40,7 @@ const PartyList = () => {
   }, []);
 
   const handlePartyClick = (partyId) => {
-    navigate(`/party/${partyId}`);
+    navigate(`/parties/:${partyId}`);
   };
 
   return (
