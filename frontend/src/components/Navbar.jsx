@@ -22,7 +22,7 @@ const Navbar = ({ onCreateProp }) => {
   }, []);
 
   // PartyDetails navbar
-  if (location.pathname.startsWith("/parties/:")) {
+  if (/^\/parties\/[^/]+$/.test(location.pathname)) {
     return (
       <>
         <div className="navbar bg-base-100 shadow-sm flex justify-between border-b">
