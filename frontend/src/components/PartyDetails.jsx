@@ -4,6 +4,7 @@ import PropModal from "./PropModal";
 import Navbar from "./Navbar";
 import LeavePartyModal from "./LeavePartyModal";
 import DeletePartyModal from "./DeletePartyModal";
+import Leaderboard from "./Leaderboard";
 import { useParams, useNavigate } from "react-router-dom";
 import supabase from "../supabase-client";
 
@@ -21,7 +22,6 @@ const PartyDetails = () => {
   const [party, setParty] = useState(null);
   const [propBets, setPropBets] = useState([]);
   const [yourBets, setYourBets] = useState([]);
-  // eslint-disable-next-line no-unused-vars
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
@@ -120,7 +120,48 @@ const PartyDetails = () => {
         }
       }
 
-      // Fetch leaderboard TODO: This would typically be a query that aggregates user winnings in this party
+      // Fetch leaderboard data by joining party_members with profiles
+      const { data: leaderboardData, error: leaderboardError } = await supabase
+        .from("party_members")
+        .select(
+          `
+          user_id,
+          balance
+        `
+        )
+        .eq("party_id", partyId)
+        .order("balance", { ascending: false });
+
+      if (leaderboardError) {
+        console.error("Error fetching leaderboard:", leaderboardError.message);
+      } else if (leaderboardData && leaderboardData.length > 0) {
+        // Fetch profiles for all users in the leaderboard
+        const userIds = leaderboardData.map((member) => member.user_id);
+        const { data: profilesData, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, username, full_name")
+          .in("id", userIds);
+
+        if (profilesError) {
+          console.error("Error fetching profiles:", profilesError.message);
+        } else {
+          // Combine the data
+          const combinedLeaderboard = leaderboardData.map((member) => {
+            const profile = profilesData.find((p) => p.id === member.user_id);
+            return {
+              ...member,
+              profiles: profile || {
+                id: member.user_id,
+                username: "Unknown",
+                full_name: "Unknown User",
+              },
+            };
+          });
+          setLeaderboard(combinedLeaderboard);
+        }
+      } else {
+        setLeaderboard([]);
+      }
     } catch (err) {
       console.error("Error fetching party data:", err);
     } finally {
@@ -336,20 +377,7 @@ const PartyDetails = () => {
           {/* Right Panel: Leaderboard & Invite */}
           <div className="space-y-6">
             {/* Leaderboard */}
-            <div className="bg-base-300 p-4 rounded-xl shadow">
-              <h2 className="text-lg font-semibold mb-2">Leaderboard</h2>
-              {leaderboard.length === 0 ? (
-                <p className="text-sm text-base-content/70">No results yet</p>
-              ) : (
-                <ol className="text-sm list-decimal list-inside space-y-1">
-                  {leaderboard.map((entry, index) => (
-                    <li key={index}>
-                      {entry.username} - ${entry.balance}
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </div>
+            <Leaderboard leaderboardData={leaderboard} currentUserId={userId} />
             {/* Invite */}
             <div className="bg-base-300 p-4 rounded-xl shadow">
               <h2 className="text-lg font-semibold mb-2">
