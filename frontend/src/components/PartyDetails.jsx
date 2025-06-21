@@ -21,101 +21,105 @@ const PartyDetails = () => {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
   const [joinCode, setJoinCode] = useState(null);
+  const [refreshNavbarBalance, setRefreshNavbarBalance] = useState(null);
+
+  const fetchPartyData = async () => {
+    setLoading(true);
+
+    try {
+      // Get current user (we know they're authenticated because of ProtectedRoute)
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw new Error("User not authenticated");
+      }
+
+      setUserId(user.id);
+
+      // Fetch party details
+      const { data: partyData, error: partyError } = await supabase
+        .from("parties")
+        .select("*")
+        .eq("id", partyId)
+        .single();
+
+      if (partyError) {
+        console.error("Error fetching party:", partyError.message);
+      } else {
+        setParty(partyData);
+        console.log("partyID: ", partyId);
+      }
+
+      const { data, error } = await supabase
+        .from("parties")
+        .select("join_code")
+        .eq("id", partyId)
+        .single();
+      if (error) {
+        console.error("Error fetching party join code:", error.message);
+      } else {
+        console.log("Party join code:", data.join_code);
+        setJoinCode(data.join_code);
+      }
+
+      // Fetch props (bets) for this party
+      const { data: propsData, error: propsError } = await supabase
+        .from("bets")
+        .select("*")
+        .eq("party_id", partyId);
+
+      if (propsError) {
+        console.error("Error fetching props:", propsError.message);
+      } else {
+        setPropBets(propsData || []);
+
+        // Now fetch wagers after we have the props
+        if (propsData && propsData.length > 0) {
+          // Fetch user's wagers by joining with bets table to filter by party_id
+          const { data: wagersData, error: wagersError } = await supabase
+            .from("wagers")
+            .select(
+              `
+              wager_id,
+              user_id,
+              bet_id,
+              choice,
+              odds,
+              amount,
+              placed_at,
+              status,
+              bets!inner(bet_info)
+            `
+            )
+            .eq("user_id", user.id)
+            .in(
+              "bet_id",
+              propsData.map((prop) => prop.bet_id)
+            );
+
+          if (wagersError) {
+            console.error("Error fetching wagers:", wagersError.message);
+          } else {
+            setYourBets(wagersData || []);
+          }
+        } else {
+          // No props, so no wagers
+          setYourBets([]);
+        }
+      }
+
+      // Fetch leaderboard TODO: This would typically be a query that aggregates user winnings in this party
+    } catch (err) {
+      console.error("Error fetching party data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchPartyData = async () => {
-      setLoading(true);
-
-      try {
-        // Get current user (we know they're authenticated because of ProtectedRoute)
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser();
-
-        if (userError || !user) {
-          throw new Error("User not authenticated");
-        }
-
-        setUserId(user.id);
-
-        // Fetch party details
-        const { data: partyData, error: partyError } = await supabase
-          .from("parties")
-          .select("*")
-          .eq("id", partyId)
-          .single();
-
-        if (partyError) {
-          console.error("Error fetching party:", partyError.message);
-        } else {
-          setParty(partyData);
-          console.log("partyID: ", partyId);
-        }
-
-        const { data, error } = await supabase
-          .from("parties")
-          .select("join_code")
-          .eq("id", partyId)
-          .single();
-        if (error) {
-          console.error("Error fetching party join code:", error.message);
-        } else {
-          console.log("Party join code:", data.join_code);
-          setJoinCode(data.join_code);
-        }
-
-        // Fetch props (bets) for this party
-        const { data: propsData, error: propsError } = await supabase
-          .from("bets")
-          .select("*")
-          .eq("party_id", partyId);
-
-        if (propsError) {
-          console.error("Error fetching props:", propsError.message);
-        } else {
-          setPropBets(propsData || []);
-
-          // Now fetch wagers after we have the props
-          if (propsData && propsData.length > 0) {
-            // Fetch user's wagers by joining with bets table to filter by party_id
-            const { data: wagersData, error: wagersError } = await supabase
-              .from("wagers")
-              .select(
-                `
-                wager_id,
-                user_id,
-                bet_id,
-                choice,
-                odds,
-                amount,
-                placed_at,
-                status,
-                bets(*)
-              `
-              )
-              .eq("user_id", user.id)
-              .in(
-                "bet_id",
-                propsData.map((prop) => prop.bet_id)
-              );
-
-            if (wagersError) {
-              console.error("Error fetching wagers:", wagersError.message);
-            } else {
-              setYourBets(wagersData || []);
-            }
-          }
-        }
-
-        // Fetch leaderboard TODO: This would typically be a query that aggregates user winnings in this party
-      } catch (err) {
-        console.error("Error fetching party data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (partyId) {
       fetchPartyData();
     }
@@ -196,10 +200,26 @@ const PartyDetails = () => {
     }
   };
 
+  const handleBetPlaced = () => {
+    // Refresh party data after a bet is placed
+    fetchPartyData();
+    // Also refresh the navbar balance
+    if (refreshNavbarBalance) {
+      refreshNavbarBalance();
+    }
+  };
+
+  const handleNavbarBalanceRefresh = (refreshFunction) => {
+    setRefreshNavbarBalance(() => refreshFunction);
+  };
+
   if (loading) {
     return (
       <>
-        <Navbar onCreateProp={handleAddProp} />
+        <Navbar
+          onCreateProp={handleAddProp}
+          onBalanceRefresh={handleNavbarBalanceRefresh}
+        />
         <div className="container mx-auto px-4 pt-10 w-4/5">
           <p className="text-xl">Loading party details...</p>
         </div>
@@ -209,7 +229,10 @@ const PartyDetails = () => {
 
   return (
     <>
-      <Navbar onCreateProp={handleAddProp} />
+      <Navbar
+        onCreateProp={handleAddProp}
+        onBalanceRefresh={handleNavbarBalanceRefresh}
+      />
       <div className="container mx-auto px-4 pt-10 w-4/5">
         <h1 className="text-3xl font-bold mb-10">{party?.name || "Party"}</h1>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -225,6 +248,8 @@ const PartyDetails = () => {
                 {propBets.map((prop) => (
                   <Prop
                     key={prop.bet_id}
+                    betId={prop.bet_id}
+                    partyId={partyId}
                     title={prop.bet_info.title}
                     description={prop.bet_info.description}
                     option1={prop.bet_info.option1}
@@ -232,6 +257,7 @@ const PartyDetails = () => {
                     option2={prop.bet_info.option2}
                     odds2={prop.bet_info.odds2}
                     onEdit={() => handleEditClick(prop)}
+                    onBetPlaced={handleBetPlaced}
                   />
                 ))}
               </div>
@@ -323,7 +349,7 @@ const PartyDetails = () => {
                       .filter((wager) => wager.status === "active")
                       .map((wager) => (
                         <tr key={wager.wager_id}>
-                          <td>{wager.bets.title}</td>
+                          <td>{wager.bets.bet_info.title}</td>
                           <td>{wager.choice}</td>
                           <td>${wager.amount}</td>
                           <td>{wager.odds}</td>
@@ -334,7 +360,7 @@ const PartyDetails = () => {
                       .filter((wager) => wager.status !== "active")
                       .map((wager) => (
                         <tr key={wager.wager_id}>
-                          <td>{wager.bets.title}</td>
+                          <td>{wager.bets.bet_info.title}</td>
                           <td>{wager.choice}</td>
                           <td>${wager.amount}</td>
                           <td

@@ -2,15 +2,45 @@ import React from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import CreatePartyModal from "./CreatePartyModal";
 import JoinPartyModal from "./JoinPartyModal";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import supabase from "../supabase-client";
 
-const Navbar = ({ onCreateProp }) => {
+const Navbar = ({ onCreateProp, onBalanceRefresh }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [userBalance, setUserBalance] = useState(0);
+
+  const fetchUserBalance = useCallback(async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        // Fetch user balance for current party (if on party details page)
+        const partyMatch = location.pathname.match(/^\/parties\/(.+)$/);
+        if (partyMatch) {
+          const partyId = partyMatch[1];
+          const { data: memberData, error: balanceError } = await supabase
+            .from("party_members")
+            .select("balance")
+            .eq("user_id", user.id)
+            .eq("party_id", partyId)
+            .single();
+
+          if (!balanceError && memberData) {
+            setUserBalance(memberData.balance);
+            console.log("Navbar balance updated to:", memberData.balance);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching balance in navbar:", err);
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -31,14 +61,25 @@ const Navbar = ({ onCreateProp }) => {
         if (!error && profileData) {
           setProfile(profileData);
         }
+
+        // Fetch initial balance
+        await fetchUserBalance();
       } else {
         setUser(null);
         setProfile(null);
+        setUserBalance(0);
       }
     };
 
     fetchUser();
-  }, []);
+  }, [location.pathname, fetchUserBalance]); // Add fetchUserBalance to dependencies
+
+  // Expose balance refresh function to parent
+  useEffect(() => {
+    if (onBalanceRefresh) {
+      onBalanceRefresh(fetchUserBalance);
+    }
+  }, [onBalanceRefresh, fetchUserBalance]); // Add fetchUserBalance to dependencies
 
   const handleLogout = async () => {
     try {
@@ -115,7 +156,7 @@ const Navbar = ({ onCreateProp }) => {
               Create Prop
             </button>
             <button className="btn btn-ghost btn-rectangle w-38">
-              Balance: $10000
+              Balance: ${userBalance.toFixed(2)}
             </button>
           </div>
 

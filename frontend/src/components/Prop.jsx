@@ -10,6 +10,9 @@ const Prop = ({
   option2,
   odds2,
   onEdit,
+  betId,
+  partyId,
+  onBetPlaced,
 }) => {
   const modalRef = useRef();
   const [currentBet, setCurrentBet] = useState(null);
@@ -29,6 +32,10 @@ const Prop = ({
     console.log(
       `Placed $${amount} on ${choice} for "${betName}" at odds ${odds}`
     );
+    // Call the parent callback to refresh data
+    if (onBetPlaced) {
+      onBetPlaced();
+    }
   };
 
   const handleEditClick = () => {
@@ -118,6 +125,8 @@ const Prop = ({
             betName={currentBet.betName}
             choice={currentBet.choice}
             odds={currentBet.odds}
+            betId={betId}
+            partyId={partyId}
             onSubmit={handlePlaceBet}
           />
         )}
