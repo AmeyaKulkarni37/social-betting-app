@@ -2,15 +2,20 @@ import React, { useEffect, useState } from "react";
 import Prop from "./Prop";
 import PropModal from "./PropModal";
 import Navbar from "./Navbar";
-import { useParams } from "react-router-dom";
+import LeavePartyModal from "./LeavePartyModal";
+import DeletePartyModal from "./DeletePartyModal";
+import { useParams, useNavigate } from "react-router-dom";
 import supabase from "../supabase-client";
 
 const PartyDetails = () => {
   const { partyId } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("active");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("add");
   const [propData, setPropData] = useState(null);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // State for fetched data
   const [party, setParty] = useState(null);
@@ -22,6 +27,7 @@ const PartyDetails = () => {
   const [userId, setUserId] = useState(null);
   const [joinCode, setJoinCode] = useState(null);
   const [refreshNavbarBalance, setRefreshNavbarBalance] = useState(null);
+  const [isHost, setIsHost] = useState(false);
 
   const fetchPartyData = async () => {
     setLoading(true);
@@ -51,6 +57,9 @@ const PartyDetails = () => {
       } else {
         setParty(partyData);
         console.log("partyID: ", partyId);
+
+        // Check if current user is the host
+        setIsHost(partyData.host_id === user.id);
       }
 
       const { data, error } = await supabase
@@ -213,6 +222,31 @@ const PartyDetails = () => {
     setRefreshNavbarBalance(() => refreshFunction);
   };
 
+  const handleLeaveParty = () => {
+    // Redirect to dashboard after leaving party
+    navigate("/dashboard");
+  };
+
+  const handleDeleteParty = () => {
+    // Redirect to dashboard after deleting party
+    navigate("/dashboard");
+  };
+
+  const handleShowLeaveModal = () => {
+    setShowLeaveModal(true);
+  };
+
+  const handleShowDeleteModal = () => {
+    // Add an extra confirmation step for delete
+    if (
+      window.confirm(
+        "Are you sure you want to delete this party? This action cannot be undone."
+      )
+    ) {
+      setShowDeleteModal(true);
+    }
+  };
+
   if (loading) {
     return (
       <>
@@ -234,7 +268,32 @@ const PartyDetails = () => {
         onBalanceRefresh={handleNavbarBalanceRefresh}
       />
       <div className="container mx-auto px-4 pt-10 w-4/5">
-        <h1 className="text-3xl font-bold mb-10">{party?.name || "Party"}</h1>
+        <div className="flex justify-between items-center mb-10">
+          <div>
+            <h1 className="text-3xl font-bold">{party?.name || "Party"}</h1>
+            <p className="text-base-content/70 mt-1">
+              {isHost ? "You are the host" : "You are a member"}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {!isHost && (
+              <button
+                className="btn btn-outline btn-error"
+                onClick={handleShowLeaveModal}
+              >
+                Leave Party
+              </button>
+            )}
+            {isHost && (
+              <button
+                className="btn btn-outline btn-error"
+                onClick={handleShowDeleteModal}
+              >
+                Delete Party
+              </button>
+            )}
+          </div>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Bets Section (takes 2/3 on large screens) */}
           <div className="bg-base-300 lg:col-span-2 space-y-4 p-5 rounded-xl shadow">
@@ -243,23 +302,33 @@ const PartyDetails = () => {
               <p className="text-base-content/70">
                 No props have been created for this party yet.
               </p>
+            ) : propBets.filter((prop) => !prop.resolved_at).length === 0 ? (
+              <p className="text-base-content/70">
+                All props have been resolved. Check the "Cleared" tab in "Your
+                Bets" to see results.
+              </p>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {propBets.map((prop) => (
-                  <Prop
-                    key={prop.bet_id}
-                    betId={prop.bet_id}
-                    partyId={partyId}
-                    title={prop.bet_info.title}
-                    description={prop.bet_info.description}
-                    option1={prop.bet_info.option1}
-                    odds1={prop.bet_info.odds1}
-                    option2={prop.bet_info.option2}
-                    odds2={prop.bet_info.odds2}
-                    onEdit={() => handleEditClick(prop)}
-                    onBetPlaced={handleBetPlaced}
-                  />
-                ))}
+                {propBets
+                  .filter((prop) => !prop.resolved_at)
+                  .map((prop) => (
+                    <Prop
+                      key={prop.bet_id}
+                      betId={prop.bet_id}
+                      partyId={partyId}
+                      title={prop.bet_info.title}
+                      description={prop.bet_info.description}
+                      option1={prop.bet_info.option1}
+                      odds1={prop.bet_info.odds1}
+                      option2={prop.bet_info.option2}
+                      odds2={prop.bet_info.odds2}
+                      onEdit={() => handleEditClick(prop)}
+                      onBetPlaced={handleBetPlaced}
+                      isHost={isHost}
+                      isResolved={!!prop.resolved_at}
+                      winningChoice={prop.winning_choice}
+                    />
+                  ))}
               </div>
             )}
           </div>
@@ -358,22 +427,56 @@ const PartyDetails = () => {
                   ) : (
                     yourBets
                       .filter((wager) => wager.status !== "active")
-                      .map((wager) => (
-                        <tr key={wager.wager_id}>
-                          <td>{wager.bets.bet_info.title}</td>
-                          <td>{wager.choice}</td>
-                          <td>${wager.amount}</td>
-                          <td
-                            className={
-                              wager.status === "win"
-                                ? "text-success"
-                                : "text-error"
-                            }
-                          >
-                            {wager.status === "win" ? "Win" : "Loss"}
-                          </td>
-                        </tr>
-                      ))
+                      .map((wager) => {
+                        const calculateWinnings = (amount, odds) => {
+                          const oddsNum = parseInt(odds);
+                          if (oddsNum > 0) {
+                            return amount + (amount * oddsNum) / 100;
+                          } else {
+                            return amount + (amount * 100) / Math.abs(oddsNum);
+                          }
+                        };
+
+                        const winnings =
+                          wager.status === "win"
+                            ? calculateWinnings(wager.amount, wager.odds)
+                            : 0;
+                        const profit =
+                          wager.status === "win"
+                            ? winnings - wager.amount
+                            : -wager.amount;
+
+                        return (
+                          <tr key={wager.wager_id}>
+                            <td>{wager.bets.bet_info.title}</td>
+                            <td>{wager.choice}</td>
+                            <td>${wager.amount}</td>
+                            <td
+                              className={
+                                wager.status === "win"
+                                  ? "text-success"
+                                  : "text-error"
+                              }
+                            >
+                              {wager.status === "win" ? (
+                                <div>
+                                  <div>Win</div>
+                                  <div className="text-xs">
+                                    +${profit.toFixed(2)}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div>
+                                  <div>Loss</div>
+                                  <div className="text-xs">
+                                    -${wager.amount}
+                                  </div>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
                   )
                 ) : (
                   <tr>
@@ -399,6 +502,22 @@ const PartyDetails = () => {
         onClose={() => setIsModalOpen(false)}
         onSubmit={handlePropSubmit}
         propData={propData}
+      />
+
+      <LeavePartyModal
+        isOpen={showLeaveModal}
+        onClose={() => setShowLeaveModal(false)}
+        partyName={party?.name || "Party"}
+        partyId={partyId}
+        onLeft={handleLeaveParty}
+      />
+
+      <DeletePartyModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        partyName={party?.name || "Party"}
+        partyId={partyId}
+        onDeleted={handleDeleteParty}
       />
     </>
   );
