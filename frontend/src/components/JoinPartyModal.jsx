@@ -65,6 +65,9 @@ const JoinPartyModal = () => {
       document.getElementById("join_party_modal").close();
       setPartyCode("");
 
+      // Refresh the page to show the joined party in the list
+      window.location.reload();
+
       // Optional: redirect to the party details page
       // window.location.href = `/parties/${partyData.id}`;
     } catch (err) {

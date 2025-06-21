@@ -1,5 +1,5 @@
 import React from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import CreatePartyModal from "./CreatePartyModal";
 import JoinPartyModal from "./JoinPartyModal";
 import { useEffect, useState } from "react";
@@ -7,26 +7,60 @@ import supabase from "../supabase-client";
 
 const Navbar = ({ onCreateProp }) => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      setUser(user);
+
+      if (user) {
+        setUser(user);
+
+        // Fetch user profile
+        const { data: profileData, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+
+        if (!error && profileData) {
+          setProfile(profileData);
+        }
+      } else {
+        setUser(null);
+        setProfile(null);
+      }
     };
 
     fetchUser();
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Error logging out:", error);
+      } else {
+        navigate("/login");
+      }
+    } catch (err) {
+      console.error("Unexpected error during logout:", err);
+    }
+  };
 
   // PartyDetails navbar
   if (/^\/parties\/[^/]+$/.test(location.pathname)) {
     return (
       <>
         <div className="navbar bg-base-100 shadow-sm flex justify-between border-b">
-          <a className="btn btn-ghost text-xl hidden sm:flex">[appName]</a>
+          <a className="btn btn-ghost text-xl hidden sm:flex">
+            <img src="/logo.png" alt="BetBros Logo" className="h-7" />
+          </a>
 
           <div className="buttons flex justify-between w-1000">
             <Link className="btn btn-ghost btn-rectangle w-38" to="/parties">
@@ -92,35 +126,43 @@ const Navbar = ({ onCreateProp }) => {
               className="btn btn-ghost btn-circle avatar"
             >
               <div className="w-10 rounded-full">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  stroke="#ffffff"
-                >
-                  <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-                  <g
-                    id="SVGRepo_tracerCarrier"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  ></g>
-                  <g id="SVGRepo_iconCarrier">
-                    {" "}
-                    <path
-                      opacity="0.4"
-                      d="M12 22.01C17.5228 22.01 22 17.5329 22 12.01C22 6.48716 17.5228 2.01001 12 2.01001C6.47715 2.01001 2 6.48716 2 12.01C2 17.5329 6.47715 22.01 12 22.01Z"
-                      fill="#ffffff"
-                    ></path>{" "}
-                    <path
-                      d="M12 6.93994C9.93 6.93994 8.25 8.61994 8.25 10.6899C8.25 12.7199 9.84 14.3699 11.95 14.4299C11.98 14.4299 12.02 14.4299 12.04 14.4299C12.06 14.4299 12.09 14.4299 12.11 14.4299C12.12 14.4299 12.13 14.4299 12.13 14.4299C14.15 14.3599 15.74 12.7199 15.75 10.6899C15.75 8.61994 14.07 6.93994 12 6.93994Z"
-                      fill="#ffffff"
-                    ></path>{" "}
-                    <path
-                      d="M18.7807 19.36C17.0007 21 14.6207 22.01 12.0007 22.01C9.3807 22.01 7.0007 21 5.2207 19.36C5.4607 18.45 6.1107 17.62 7.0607 16.98C9.7907 15.16 14.2307 15.16 16.9407 16.98C17.9007 17.62 18.5407 18.45 18.7807 19.36Z"
-                      fill="#ffffff"
-                    ></path>{" "}
-                  </g>
-                </svg>
+                {profile?.avatar_url ? (
+                  <img
+                    src={profile.avatar_url}
+                    alt="Profile avatar"
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    stroke="#ffffff"
+                  >
+                    <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+                    <g
+                      id="SVGRepo_tracerCarrier"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    ></g>
+                    <g id="SVGRepo_iconCarrier">
+                      {" "}
+                      <path
+                        opacity="0.4"
+                        d="M12 22.01C17.5228 22.01 22 17.5329 22 12.01C22 6.48716 17.5228 2.01001 12 2.01001C6.47715 2.01001 2 6.48716 2 12.01C2 17.5329 6.47715 22.01 12 22.01Z"
+                        fill="#ffffff"
+                      ></path>{" "}
+                      <path
+                        d="M12 6.93994C9.93 6.93994 8.25 8.61994 8.25 10.6899C8.25 12.7199 9.84 14.3699 11.95 14.4299C11.98 14.4299 12.02 14.4299 12.04 14.4299C12.06 14.4299 12.09 14.4299 12.11 14.4299C12.12 14.4299 12.13 14.4299 12.13 14.4299C14.15 14.3599 15.74 12.7199 15.75 10.6899C15.75 8.61994 14.07 6.93994 12 6.93994Z"
+                        fill="#ffffff"
+                      ></path>{" "}
+                      <path
+                        d="M18.7807 19.36C17.0007 21 14.6207 22.01 12.0007 22.01C9.3807 22.01 7.0007 21 5.2207 19.36C5.4607 18.45 6.1107 17.62 7.0607 16.98C9.7907 15.16 14.2307 15.16 16.9407 16.98C17.9007 17.62 18.5407 18.45 18.7807 19.36Z"
+                        fill="#ffffff"
+                      ></path>{" "}
+                    </g>
+                  </svg>
+                )}
               </div>
             </div>
             <ul
@@ -128,16 +170,25 @@ const Navbar = ({ onCreateProp }) => {
               className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
             >
               <li>
-                <a className="justify-between">
-                  Profile
-                  <span className="badge">New</span>
-                </a>
+                <div className="flex flex-col items-start py-2">
+                  <span className="font-semibold">
+                    {profile?.full_name || profile?.username || "User"}
+                  </span>
+                  {profile?.username && profile?.full_name && (
+                    <span className="text-xs text-base-content/60">
+                      @{profile.username}
+                    </span>
+                  )}
+                </div>
+              </li>
+              <li className="border-t border-base-content/20">
+                <a>Profile</a>
               </li>
               <li>
                 <a>Settings</a>
               </li>
               <li>
-                <a>Logout</a>
+                <a onClick={handleLogout}>Logout</a>
               </li>
             </ul>
           </div>
@@ -150,7 +201,9 @@ const Navbar = ({ onCreateProp }) => {
   return (
     <>
       <div className="navbar bg-base-100 shadow-sm flex justify-between border-b">
-        <a className="btn btn-ghost text-xl">[appName]</a>
+        <a className="btn btn-ghost text-xl">
+          <img src="/logo.png" alt="BetBros Logo" className="h-7" />
+        </a>
 
         <div className="buttons flex justify-between w-80 gap-3">
           <button
@@ -202,35 +255,43 @@ const Navbar = ({ onCreateProp }) => {
             className="btn btn-ghost btn-circle avatar"
           >
             <div className="w-10 rounded-full">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                stroke="#ffffff"
-              >
-                <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-                <g
-                  id="SVGRepo_tracerCarrier"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                ></g>
-                <g id="SVGRepo_iconCarrier">
-                  {" "}
-                  <path
-                    opacity="0.4"
-                    d="M12 22.01C17.5228 22.01 22 17.5329 22 12.01C22 6.48716 17.5228 2.01001 12 2.01001C6.47715 2.01001 2 6.48716 2 12.01C2 17.5329 6.47715 22.01 12 22.01Z"
-                    fill="#ffffff"
-                  ></path>{" "}
-                  <path
-                    d="M12 6.93994C9.93 6.93994 8.25 8.61994 8.25 10.6899C8.25 12.7199 9.84 14.3699 11.95 14.4299C11.98 14.4299 12.02 14.4299 12.04 14.4299C12.06 14.4299 12.09 14.4299 12.11 14.4299C12.12 14.4299 12.13 14.4299 12.13 14.4299C14.15 14.3599 15.74 12.7199 15.75 10.6899C15.75 8.61994 14.07 6.93994 12 6.93994Z"
-                    fill="#ffffff"
-                  ></path>{" "}
-                  <path
-                    d="M18.7807 19.36C17.0007 21 14.6207 22.01 12.0007 22.01C9.3807 22.01 7.0007 21 5.2207 19.36C5.4607 18.45 6.1107 17.62 7.0607 16.98C9.7907 15.16 14.2307 15.16 16.9407 16.98C17.9007 17.62 18.5407 18.45 18.7807 19.36Z"
-                    fill="#ffffff"
-                  ></path>{" "}
-                </g>
-              </svg>
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt="Profile avatar"
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ) : (
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  stroke="#ffffff"
+                >
+                  <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+                  <g
+                    id="SVGRepo_tracerCarrier"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  ></g>
+                  <g id="SVGRepo_iconCarrier">
+                    {" "}
+                    <path
+                      opacity="0.4"
+                      d="M12 22.01C17.5228 22.01 22 17.5329 22 12.01C22 6.48716 17.5228 2.01001 12 2.01001C6.47715 2.01001 2 6.48716 2 12.01C2 17.5329 6.47715 22.01 12 22.01Z"
+                      fill="#ffffff"
+                    ></path>{" "}
+                    <path
+                      d="M12 6.93994C9.93 6.93994 8.25 8.61994 8.25 10.6899C8.25 12.7199 9.84 14.3699 11.95 14.4299C11.98 14.4299 12.02 14.4299 12.04 14.4299C12.06 14.4299 12.09 14.4299 12.11 14.4299C12.12 14.4299 12.13 14.4299 12.13 14.4299C14.15 14.3599 15.74 12.7199 15.75 10.6899C15.75 8.61994 14.07 6.93994 12 6.93994Z"
+                      fill="#ffffff"
+                    ></path>{" "}
+                    <path
+                      d="M18.7807 19.36C17.0007 21 14.6207 22.01 12.0007 22.01C9.3807 22.01 7.0007 21 5.2207 19.36C5.4607 18.45 6.1107 17.62 7.0607 16.98C9.7907 15.16 14.2307 15.16 16.9407 16.98C17.9007 17.62 18.5407 18.45 18.7807 19.36Z"
+                      fill="#ffffff"
+                    ></path>{" "}
+                  </g>
+                </svg>
+              )}
             </div>
           </div>
           <ul
@@ -238,16 +299,25 @@ const Navbar = ({ onCreateProp }) => {
             className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
           >
             <li>
-              <a className="justify-between">
-                Profile
-                <span className="badge">New</span>
-              </a>
+              <div className="flex flex-col items-start py-2">
+                <span className="font-semibold">
+                  {profile?.full_name || profile?.username || "User"}
+                </span>
+                {profile?.username && profile?.full_name && (
+                  <span className="text-xs text-base-content/60">
+                    @{profile.username}
+                  </span>
+                )}
+              </div>
+            </li>
+            <li className="border-t border-base-content/20">
+              <a>Profile</a>
             </li>
             <li>
               <a>Settings</a>
             </li>
             <li>
-              <a>Logout</a>
+              <a onClick={handleLogout}>Logout</a>
             </li>
           </ul>
         </div>

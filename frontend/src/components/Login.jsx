@@ -12,7 +12,7 @@ const Login = () => {
     e.preventDefault();
     setAuthError("");
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -55,7 +55,9 @@ const Login = () => {
           </div>
 
           {authError && (
-            <div className="text-error text-sm text-center">{authError}</div>
+            <div className="text-error text-sm text-center bg-error/20 p-3 rounded">
+              {authError}
+            </div>
           )}
 
           <button type="submit" className="btn btn-primary w-full">
@@ -63,14 +65,24 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm">
-          Don’t have an account?{" "}
-          <span
-            onClick={() => navigate("/signup")}
-            className="text-primary hover:underline cursor-pointer"
-          >
-            Sign Up
-          </span>
+        <div className="mt-6 space-y-3 text-center text-sm">
+          <div>
+            <span
+              onClick={() => navigate("/forgot-password")}
+              className="text-primary hover:underline cursor-pointer"
+            >
+              Forgot your password?
+            </span>
+          </div>
+          <div>
+            Don't have an account?{" "}
+            <span
+              onClick={() => navigate("/signup")}
+              className="text-primary hover:underline cursor-pointer"
+            >
+              Sign Up
+            </span>
+          </div>
         </div>
       </div>
     </div>

@@ -16,6 +16,7 @@ const PartyDetails = () => {
   const [party, setParty] = useState(null);
   const [propBets, setPropBets] = useState([]);
   const [yourBets, setYourBets] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
@@ -25,91 +26,94 @@ const PartyDetails = () => {
     const fetchPartyData = async () => {
       setLoading(true);
 
-      // Get current user
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+      try {
+        // Get current user (we know they're authenticated because of ProtectedRoute)
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
 
-      if (userError || !user) {
-        console.error("User not logged in");
-        return;
-      }
+        if (userError || !user) {
+          throw new Error("User not authenticated");
+        }
 
-      setUserId(user.id);
+        setUserId(user.id);
 
-      // Fetch party details
-      const { data: partyData, error: partyError } = await supabase
-        .from("parties")
-        .select("*")
-        .eq("id", partyId)
-        .single();
+        // Fetch party details
+        const { data: partyData, error: partyError } = await supabase
+          .from("parties")
+          .select("*")
+          .eq("id", partyId)
+          .single();
 
-      if (partyError) {
-        console.error("Error fetching party:", partyError.message);
-      } else {
-        setParty(partyData);
-        console.log("partyID: ", partyId);
-      }
+        if (partyError) {
+          console.error("Error fetching party:", partyError.message);
+        } else {
+          setParty(partyData);
+          console.log("partyID: ", partyId);
+        }
 
-      const { data, error } = await supabase
-        .from("parties")
-        .select("join_code")
-        .eq("id", partyId)
-        .single();
-      if (error) {
-        console.error("Error fetching party join code:", error.message);
-      } else {
-        console.log("Party join code:", data.join_code);
-        setJoinCode(data.join_code);
-      }
+        const { data, error } = await supabase
+          .from("parties")
+          .select("join_code")
+          .eq("id", partyId)
+          .single();
+        if (error) {
+          console.error("Error fetching party join code:", error.message);
+        } else {
+          console.log("Party join code:", data.join_code);
+          setJoinCode(data.join_code);
+        }
 
-      // Fetch props (bets) for this party
-      const { data: propsData, error: propsError } = await supabase
-        .from("bets")
-        .select("*")
-        .eq("party_id", partyId);
+        // Fetch props (bets) for this party
+        const { data: propsData, error: propsError } = await supabase
+          .from("bets")
+          .select("*")
+          .eq("party_id", partyId);
 
-      if (propsError) {
-        console.error("Error fetching props:", propsError.message);
-      } else {
-        setPropBets(propsData);
+        if (propsError) {
+          console.error("Error fetching props:", propsError.message);
+        } else {
+          setPropBets(propsData || []);
 
-        // Now fetch wagers after we have the props
-        if (propsData && propsData.length > 0) {
-          // Fetch user's wagers by joining with bets table to filter by party_id
-          const { data: wagersData, error: wagersError } = await supabase
-            .from("wagers")
-            .select(
+          // Now fetch wagers after we have the props
+          if (propsData && propsData.length > 0) {
+            // Fetch user's wagers by joining with bets table to filter by party_id
+            const { data: wagersData, error: wagersError } = await supabase
+              .from("wagers")
+              .select(
+                `
+                wager_id,
+                user_id,
+                bet_id,
+                choice,
+                odds,
+                amount,
+                placed_at,
+                status,
+                bets(*)
               `
-              wager_id,
-              user_id,
-              bet_id,
-              choice,
-              odds,
-              amount,
-              placed_at,
-              status,
-              bets(*)
-            `
-            )
-            .eq("user_id", userId)
-            .in(
-              "bet_id",
-              propsData.map((prop) => prop.bet_id)
-            );
+              )
+              .eq("user_id", user.id)
+              .in(
+                "bet_id",
+                propsData.map((prop) => prop.bet_id)
+              );
 
-          if (wagersError) {
-            console.error("Error fetching wagers:", wagersError.message);
-          } else {
-            setYourBets(wagersData);
+            if (wagersError) {
+              console.error("Error fetching wagers:", wagersError.message);
+            } else {
+              setYourBets(wagersData || []);
+            }
           }
         }
+
+        // Fetch leaderboard TODO: This would typically be a query that aggregates user winnings in this party
+      } catch (err) {
+        console.error("Error fetching party data:", err);
+      } finally {
+        setLoading(false);
       }
-
-      // Fetch leaderboard TODO: This would typically be a query that aggregates user winnings in this party
-
-      setLoading(false);
     };
 
     if (partyId) {

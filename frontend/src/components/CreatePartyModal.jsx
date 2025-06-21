@@ -44,7 +44,7 @@ const CreatePartyModal = ({ user }) => {
         const fileName = `${Date.now()}.${fileExt}`;
 
         console.log("Uploading image...");
-        const { data: storageData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from("party-images")
           .upload(fileName, imageFile);
 
@@ -90,7 +90,7 @@ const CreatePartyModal = ({ user }) => {
 
       console.log("Party creation response:", newParty);
 
-      const partyId = newParty[0].party_id;
+      const partyId = newParty[0].id;
 
       // Now insert into party_members with the retrieved ID
       console.log("Adding user to party_members with party_id:", partyId);
@@ -113,6 +113,11 @@ const CreatePartyModal = ({ user }) => {
       console.log("Successfully added user to party!");
       // Show success message
       setSuccess(true);
+
+      // Refresh the page to show the new party in the list
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
 
       // Optional: redirect to the new party
       // setTimeout(() => {
